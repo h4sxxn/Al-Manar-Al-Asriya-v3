@@ -1,0 +1,14 @@
+Model provenance — public/models/jcb-3cx.glb (hero JCB, Al Manar Al Asriya site)
+
+Title:   "JCB Backhoe Loader 3CX Tractor"
+Author:  Kyle Burton
+Source:  Sketchfab — https://sketchfab.com/3d-models/5b2d02e1c1c14deba0f9c8d75fff54b6
+Licence: CC BY 4.0 (Creative Commons Attribution 4.0) — commercial use permitted
+         with attribution. The site footer carries the credit line:
+         3D model "JCB Backhoe Loader 3CX Tractor" by Kyle Burton (Sketchfab), CC BY 4.0.
+
+File notes: web-optimised derivative of the author's model — single merged mesh,
+152k triangles, texture atlas baked to 1024px, material bake corrected
+(emissive zeroed, metallic/roughness normalised). Original units are
+centimetre-scale; the site normalises scale/orientation at load time
+(src/three/loadJCB.js). No geometry was remodelled.
