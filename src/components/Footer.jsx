@@ -21,8 +21,7 @@ export default function Footer() {
         </button>
       </div>
       <div className="footer-credits">
-        <div>{f.credits}</div>
-        <div style={{ marginTop: 8 }}>© {new Date().getFullYear()} {f.rights}</div>
+        <div>© {new Date().getFullYear()} {f.rights}</div>
       </div>
     </footer>
   )

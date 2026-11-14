@@ -1,78 +1,53 @@
 import { useEffect, useRef } from 'react'
 import { useLang, WA_NUMBER } from '../i18n'
 import { gsap, ScrollTrigger, reducedMotion, scrollToTarget } from '../fx/scroll'
-import { makeShowroom } from '../three/showroom'
-import { loadJCB } from '../three/loadJCB'
 import { Lines, ArrowIcon } from './ui'
 
+const PHOTO = `${import.meta.env.BASE_URL}images/hero-jcb.webp`
+
+/* The hero: a photographic JCB backhoe in the bronze showroom, presented
+   full-bleed on the stage side while the copy keeps the left column.
+   Motion comes from a slow Ken Burns drift on the photograph, a scroll
+   parallax while the hero is pinned, the ember field above it and the
+   copy reveals — no 3D model ships in the hero anymore. */
 export default function HeroJCB({ onQuote }) {
   const { t, lang } = useLang()
   const sectionRef = useRef(null)
-  const mountRef = useRef(null)
   const loaderRef = useRef(null)
   const copyRef = useRef(null)
   const topRef = useRef(null)
-  const roRefs = { slew: useRef(null), camera: useRef(null) }
+  const photoWrapRef = useRef(null)
+  const imgRef = useRef(null)
 
   useEffect(() => {
-    const mount = mountRef.current
     const section = sectionRef.current
-    if (!mount || !section) return
-    let disposed = false
-    const stage = makeShowroom(mount, { fov: 36 })
-    const fit = () => {
-      const a = mount.clientWidth / Math.max(mount.clientHeight, 1)
-      stage.snapCamera(a < 0.8 ? 16.5 : a < 1.25 ? 13.6 : 11.8, a < 0.8 ? 3.6 : 3.1)
-    }
-    fit()
+    if (!section) return
+    // the branded loader lifts as soon as the local photograph is ready —
+    // no model download to wait for anymore
+    const done = () => loaderRef.current?.classList.add('done')
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) done()
+    const failSafe = setTimeout(done, 2500)
 
-    // the real JCB 3CX (downloaded GLB) — the branded loader lifts only
-    // once the machine is actually on the platform
-    const group = loadJCB(() => { if (!disposed) loaderRef.current?.classList.add('done') })
-    group.position.y = 0.245 // standing on the platform
-    stage.turntable.add(group)
-
-    const failSafe = setTimeout(() => loaderRef.current?.classList.add('done'), 9000)
-
-    // readouts — a few times a second; they only ever show motion that is
-    // really happening: the turntable rotation and the camera distance
-    let frames = 0
-    stage.onTick(() => {
-      if (++frames % 8) return
-      const rot = ((stage.rotation() * 57.2958) % 360 + 360) % 360
-      if (roRefs.slew.current) roRefs.slew.current.textContent = `${String(Math.round(rot)).padStart(3, '0')}°`
-      if (roRefs.camera.current) roRefs.camera.current.textContent = `${stage.cameraDist().toFixed(1)} M`
-    })
-
-    // —— scroll choreography: the turntable turns and the camera dollies in ——
+    // —— scroll choreography: while the hero pins, the copy lifts away and
+    // the photograph parallaxes inside its frame ——
     let st = null
     if (!reducedMotion()) {
-      let lastP = 0
+      if (photoWrapRef.current) gsap.set(photoWrapRef.current, { yPercent: -2.2 })
       st = ScrollTrigger.create({
         trigger: section, start: 'top top', end: '+=110%', scrub: 0.5,
         pin: true, anticipatePin: 1,
         onUpdate: (self) => {
           const p = self.progress
-          stage.nudge((p - lastP) * Math.PI * 1.7)
-          lastP = p
-          const a = mount.clientWidth / Math.max(mount.clientHeight, 1)
-          const d0 = a < 0.8 ? 16.5 : a < 1.25 ? 13.6 : 11.8
-          stage.setCamera(d0 - 1.7 * p, (a < 0.8 ? 3.6 : 3.1) - 0.45 * p)
+          if (photoWrapRef.current) gsap.set(photoWrapRef.current, { yPercent: -2.2 + 4.4 * p })
           if (copyRef.current) gsap.set(copyRef.current, { y: -46 * p, opacity: 1 - 0.55 * p })
           if (topRef.current) gsap.set(topRef.current, { opacity: 1 - Math.min(p / 0.3, 1) })
         },
       })
     }
-    const onResize = () => fit()
-    window.addEventListener('resize', onResize)
     return () => {
-      disposed = true
       clearTimeout(failSafe)
-      window.removeEventListener('resize', onResize)
       st?.kill()
-      stage.dispose()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const h = t.hero
@@ -101,7 +76,16 @@ export default function HeroJCB({ onQuote }) {
         </div>
 
         <div className="hero-stagewrap">
-          <div className="hero-stage" ref={mountRef} />
+          <div className="hero-photo-wrap" ref={photoWrapRef}>
+            <img
+              className="hero-photo"
+              ref={imgRef}
+              src={PHOTO}
+              alt={h.hudUnit}
+              fetchPriority="high"
+              onLoad={() => loaderRef.current?.classList.add('done')}
+            />
+          </div>
           <div className="hero-loader" ref={loaderRef}>
             <div>AL MANAR AL ASRIYA<div className="bar"><i /></div></div>
           </div>
@@ -110,12 +94,7 @@ export default function HeroJCB({ onQuote }) {
             <span className="hud hud-coords">{h.hudCoords}</span>
           </div>
           <div className="hero-hint">
-            <span className="hud">↺ {h.hudDrag}</span>
             <span className="hud">↓ {h.hudScroll}</span>
-          </div>
-          <div className="hero-readout" aria-hidden="true">
-            <div>{h.readout.slew} <b ref={roRefs.slew}>000°</b></div>
-            <div>{h.readout.camera} <b ref={roRefs.camera}>—</b></div>
           </div>
           <div className="hero-points">
             {h.points.map((p, i) => <span className="chip" key={i}>{p}</span>)}

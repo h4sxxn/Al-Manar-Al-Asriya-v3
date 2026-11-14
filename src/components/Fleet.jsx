@@ -45,7 +45,6 @@ export default function Fleet({ onQuote }) {
               <article className="fleet-row" key={m.id}>
                 <div className="fleet-idx"><b>{String(i + 1).padStart(2, '0')}</b>/ 06</div>
                 <div className="fleet-media">
-                  {m.id === 'excavator' && <span className="tag3d">{f.interactive}</span>}
                   <img src={m.img} alt={d.name} loading="lazy" />
                 </div>
                 <div className="fleet-body">
